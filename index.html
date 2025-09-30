@@ -120,12 +120,12 @@
         }
 
         @keyframes shake {
-            0%, 100% { transform: rotate(0deg); }
-            25% { transform: rotate(2deg); }
-            75% { transform: rotate(-2deg); }
+            0%, 100% { transform: rotate(var(--final-rotation)); }
+            25% { transform: rotate(calc(var(--final-rotation) + 2deg)); }
+            75% { transform: rotate(calc(var(--final-rotation) - 2deg)); }
         }
 
-        .shake {
+        #wheel.shake {
             animation: shake 0.3s ease-in-out 3;
         }
 
@@ -284,17 +284,28 @@
 
             // 旋轉結束後
             setTimeout(() => {
+                // 移除 transition 避免 shake 時跳動
+                wheel.style.transition = 'none';
+
+                // 設定 CSS 變數供 shake 動畫使用
+                wheel.style.setProperty('--final-rotation', `${totalRotation}deg`);
+
                 // 小抖動效果
                 wheel.classList.add('shake');
 
                 setTimeout(() => {
                     wheel.classList.remove('shake');
 
-                    // 計算結果
+                    // 恢復 transition
+                    wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+
+                    // 計算結果 - 指針在正上方 (12點鐘方向)
                     const normalizedRotation = totalRotation % 360;
-                    const adjustedRotation = (360 - normalizedRotation + 90) % 360;
+                    // 指針指向的角度 (順時針旋轉，所以要用 360 - rotation)
+                    const pointerAngle = (360 - normalizedRotation) % 360;
                     const anglePerSegment = 360 / items.length;
-                    const winningIndex = Math.floor(adjustedRotation / anglePerSegment) % items.length;
+                    // 計算中獎的扇形索引
+                    const winningIndex = Math.floor(pointerAngle / anglePerSegment) % items.length;
 
                     // 顯示結果
                     result.textContent = `🎉 ${items[winningIndex].name} 🎉`;
