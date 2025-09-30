@@ -159,6 +159,40 @@
         let items = [];
         let isSpinning = false;
         let currentRotation = 0;
+        let spinAudio = null;
+
+        // 初始化音效（使用 Web Audio API 生成旋轉音效）
+        function initAudio() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                const audioContext = new AudioContext();
+
+                // 創建一個簡單的旋轉音效
+                const createSpinSound = () => {
+                    const oscillator = audioContext.createOscillator();
+                    const gainNode = audioContext.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(audioContext.destination);
+
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(200, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(100, audioContext.currentTime + 4);
+
+                    gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 4);
+
+                    oscillator.start(audioContext.currentTime);
+                    oscillator.stop(audioContext.currentTime + 4);
+
+                    return { oscillator, gainNode };
+                };
+
+                spinAudio = { audioContext, createSpinSound };
+            } catch (e) {
+                console.log('音效初始化失敗（瀏覽器可能不支援）:', e);
+            }
+        }
 
         // 隨機選擇指定數量的項目
         function getRandomItems(allItems, count) {
@@ -298,10 +332,23 @@
             result.textContent = '';
             result.classList.remove('show');
 
-            // 隨機旋轉圈數 (5-8 圈) + 隨機角度
+            // 播放旋轉音效
+            if (spinAudio && spinAudio.audioContext) {
+                try {
+                    if (spinAudio.audioContext.state === 'suspended') {
+                        spinAudio.audioContext.resume();
+                    }
+                    spinAudio.createSpinSound();
+                } catch (e) {
+                    console.log('播放音效失敗:', e);
+                }
+            }
+
+            // 隨機旋轉圈數 (5-8 圈) + 隨機角度，確保總是順時針旋轉
             const spins = 5 + Math.random() * 3;
             const randomAngle = Math.random() * 360;
-            const totalRotation = currentRotation + (spins * 360) + randomAngle;
+            const additionalRotation = (spins * 360) + randomAngle;  // 總是正值
+            const totalRotation = currentRotation + additionalRotation;  // 累加正值，確保順時針
 
             wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
             wheel.style.transform = `rotate(${totalRotation}deg)`;
@@ -343,7 +390,10 @@
         }
 
         // 頁面載入時初始化
-        window.addEventListener('load', loadItems);
+        window.addEventListener('load', () => {
+            initAudio();
+            loadItems();
+        });
     </script>
 </body>
 </html>
