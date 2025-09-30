@@ -163,19 +163,31 @@
         // 從 JSON 載入資料
         async function loadItems() {
             try {
-                // 優先從 GitHub Raw URL 載入
-                const githubUrl = 'https://raw.githubusercontent.com/Clark0315/Notion_Roulette/main/items.json';
+                // 優先從 GitHub Raw URL 載入 (使用 master 分支)
+                const githubUrl = 'https://raw.githubusercontent.com/Clark0315/Notion_Roulette/master/items.json';
                 let response;
+                let data;
 
                 try {
                     response = await fetch(githubUrl);
+                    if (!response.ok) {
+                        throw new Error('GitHub fetch failed');
+                    }
+                    data = await response.json();
                 } catch (e) {
+                    console.log('從 GitHub 載入失敗，嘗試從本地載入...');
                     // 如果 GitHub 載入失敗，從本地載入
                     response = await fetch('./items.json');
+                    if (!response.ok) {
+                        throw new Error('Local fetch failed');
+                    }
+                    data = await response.json();
                 }
 
-                const data = await response.json();
                 items = data.filter(item => item.enabled);
+                if (items.length === 0) {
+                    throw new Error('沒有啟用的項目');
+                }
                 drawWheel();
             } catch (error) {
                 console.error('載入資料失敗:', error);
