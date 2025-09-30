@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notion Roulette</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2em;
+        }
+
+        .wheel-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            margin: 0 auto 30px;
+        }
+
+        #wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #ff4444;
+            z-index: 10;
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+        }
+
+        .center-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            border: 4px solid #333;
+            z-index: 5;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            font-size: 1.2em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 1.5em;
+            color: #333;
+            min-height: 40px;
+            font-weight: bold;
+        }
+
+        .result.show {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(2deg); }
+            75% { transform: rotate(-2deg); }
+        }
+
+        .shake {
+            animation: shake 0.3s ease-in-out 3;
+        }
+
+        @media (max-width: 500px) {
+            .wheel-container {
+                width: 300px;
+                height: 300px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 Notion Roulette</h1>
+        <div class="wheel-container">
+            <div class="pointer"></div>
+            <svg id="wheel" viewBox="0 0 400 400">
+                <!-- Wheel segments will be drawn here -->
+            </svg>
+            <div class="center-circle"></div>
+        </div>
+        <button id="spinBtn" onclick="spin()">🎲 旋轉</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        let items = [];
+        let isSpinning = false;
+        let currentRotation = 0;
+
+        // 從 JSON 載入資料
+        async function loadItems() {
+            try {
+                // 優先從 GitHub Raw URL 載入
+                const githubUrl = 'https://raw.githubusercontent.com/Clark0315/Notion_Roulette/main/items.json';
+                let response;
+
+                try {
+                    response = await fetch(githubUrl);
+                } catch (e) {
+                    // 如果 GitHub 載入失敗，從本地載入
+                    response = await fetch('./items.json');
+                }
+
+                const data = await response.json();
+                items = data.filter(item => item.enabled);
+                drawWheel();
+            } catch (error) {
+                console.error('載入資料失敗:', error);
+                // 使用預設資料
+                items = [
+                    { name: "A書", enabled: true, color: "#FF6384" },
+                    { name: "B書", enabled: true, color: "#36A2EB" },
+                    { name: "C書", enabled: true, color: "#FFCE56" },
+                    { name: "D書", enabled: true, color: "#4BC0C0" }
+                ];
+                drawWheel();
+            }
+        }
+
+        // 繪製輪盤
+        function drawWheel() {
+            const wheel = document.getElementById('wheel');
+            wheel.innerHTML = '';
+
+            const total = items.length;
+            const anglePerSegment = 360 / total;
+
+            items.forEach((item, index) => {
+                const startAngle = index * anglePerSegment;
+                const endAngle = startAngle + anglePerSegment;
+
+                // 計算 SVG path
+                const path = createSegmentPath(startAngle, endAngle);
+                const segment = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                segment.setAttribute('d', path);
+                segment.setAttribute('fill', item.color);
+                segment.setAttribute('stroke', 'white');
+                segment.setAttribute('stroke-width', '2');
+                wheel.appendChild(segment);
+
+                // 添加文字
+                const textAngle = startAngle + anglePerSegment / 2;
+                const textRadius = 120;
+                const textX = 200 + textRadius * Math.cos((textAngle - 90) * Math.PI / 180);
+                const textY = 200 + textRadius * Math.sin((textAngle - 90) * Math.PI / 180);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', textX);
+                text.setAttribute('y', textY);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dominant-baseline', 'middle');
+                text.setAttribute('fill', 'white');
+                text.setAttribute('font-size', '20');
+                text.setAttribute('font-weight', 'bold');
+                text.setAttribute('transform', `rotate(${textAngle}, ${textX}, ${textY})`);
+                text.textContent = item.name;
+                wheel.appendChild(text);
+            });
+        }
+
+        function createSegmentPath(startAngle, endAngle) {
+            const cx = 200;
+            const cy = 200;
+            const radius = 200;
+
+            const startRad = (startAngle - 90) * Math.PI / 180;
+            const endRad = (endAngle - 90) * Math.PI / 180;
+
+            const x1 = cx + radius * Math.cos(startRad);
+            const y1 = cy + radius * Math.sin(startRad);
+            const x2 = cx + radius * Math.cos(endRad);
+            const y2 = cy + radius * Math.sin(endRad);
+
+            const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+
+            return `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2} Z`;
+        }
+
+        // 旋轉功能
+        function spin() {
+            if (isSpinning || items.length === 0) return;
+
+            isSpinning = true;
+            const btn = document.getElementById('spinBtn');
+            const wheel = document.getElementById('wheel');
+            const result = document.getElementById('result');
+
+            btn.disabled = true;
+            result.textContent = '';
+            result.classList.remove('show');
+
+            // 隨機旋轉圈數 (5-8 圈) + 隨機角度
+            const spins = 5 + Math.random() * 3;
+            const randomAngle = Math.random() * 360;
+            const totalRotation = currentRotation + (spins * 360) + randomAngle;
+
+            wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+            wheel.style.transform = `rotate(${totalRotation}deg)`;
+
+            // 旋轉結束後
+            setTimeout(() => {
+                // 小抖動效果
+                wheel.classList.add('shake');
+
+                setTimeout(() => {
+                    wheel.classList.remove('shake');
+
+                    // 計算結果
+                    const normalizedRotation = totalRotation % 360;
+                    const adjustedRotation = (360 - normalizedRotation + 90) % 360;
+                    const anglePerSegment = 360 / items.length;
+                    const winningIndex = Math.floor(adjustedRotation / anglePerSegment) % items.length;
+
+                    // 顯示結果
+                    result.textContent = `🎉 ${items[winningIndex].name} 🎉`;
+                    result.classList.add('show');
+
+                    currentRotation = totalRotation % 360;
+                    isSpinning = false;
+                    btn.disabled = false;
+                }, 900); // shake animation duration
+            }, 4000); // spin duration
+        }
+
+        // 頁面載入時初始化
+        window.addEventListener('load', loadItems);
+    </script>
+</body>
+</html>
