@@ -1,6 +1,15 @@
-[
-  { "name": "A書", "enabled": true, "color": "#FF6384" },
-  { "name": "B書", "enabled": true, "color": "#36A2EB" },
-  { "name": "C書", "enabled": true, "color": "#FFCE56" },
-  { "name": "D書", "enabled": true, "color": "#4BC0C0" }
-]
+{
+  "displayCount": 6,
+  "items": [
+    { "name": "A書", "enabled": true, "color": "#FF6384" },
+    { "name": "B書", "enabled": true, "color": "#36A2EB" },
+    { "name": "C書", "enabled": true, "color": "#FFCE56" },
+    { "name": "D書", "enabled": true, "color": "#4BC0C0" },
+    { "name": "E書", "enabled": true, "color": "#9966FF" },
+    { "name": "F書", "enabled": true, "color": "#FF9F40" },
+    { "name": "G書", "enabled": true, "color": "#FF6384" },
+    { "name": "H書", "enabled": true, "color": "#4BC0C0" },
+    { "name": "I書", "enabled": true, "color": "#FFCE56" },
+    { "name": "J書", "enabled": true, "color": "#36A2EB" }
+  ]
+}

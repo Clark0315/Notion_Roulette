@@ -160,6 +160,12 @@
         let isSpinning = false;
         let currentRotation = 0;
 
+        // 隨機選擇指定數量的項目
+        function getRandomItems(allItems, count) {
+            const shuffled = [...allItems].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, Math.min(count, allItems.length));
+        }
+
         // 從 JSON 載入資料
         async function loadItems() {
             try {
@@ -184,10 +190,25 @@
                     data = await response.json();
                 }
 
-                items = data.filter(item => item.enabled);
-                if (items.length === 0) {
+                // 支援新舊格式
+                let allItems, displayCount;
+                if (Array.isArray(data)) {
+                    // 舊格式：直接是陣列
+                    allItems = data.filter(item => item.enabled);
+                    displayCount = allItems.length;
+                } else {
+                    // 新格式：包含 displayCount 和 items
+                    allItems = data.items.filter(item => item.enabled);
+                    displayCount = data.displayCount || allItems.length;
+                }
+
+                if (allItems.length === 0) {
                     throw new Error('沒有啟用的項目');
                 }
+
+                // 隨機選擇指定數量的項目
+                items = getRandomItems(allItems, displayCount);
+
                 drawWheel();
             } catch (error) {
                 console.error('載入資料失敗:', error);
@@ -196,8 +217,11 @@
                     { name: "A書", enabled: true, color: "#FF6384" },
                     { name: "B書", enabled: true, color: "#36A2EB" },
                     { name: "C書", enabled: true, color: "#FFCE56" },
-                    { name: "D書", enabled: true, color: "#4BC0C0" }
+                    { name: "D書", enabled: true, color: "#4BC0C0" },
+                    { name: "E書", enabled: true, color: "#9966FF" },
+                    { name: "F書", enabled: true, color: "#FF9F40" }
                 ];
+                items = getRandomItems(items, 6);
                 drawWheel();
             }
         }
