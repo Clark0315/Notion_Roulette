@@ -390,7 +390,9 @@
             const additionalRotation = (spins * 360) + randomAngle;
             const totalRotation = currentRotation + additionalRotation;
 
-            wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+            // 使用緩入緩出的 cubic-bezier，模擬真實輪盤的緩慢加速
+            // 參數: ease-in-out (開始慢、中間快、結束慢)
+            wheel.style.transition = 'transform 4s cubic-bezier(0.33, 0.01, 0.12, 0.99)';
             wheel.style.transform = `rotate(${totalRotation}deg)`;
 
             // 旋轉結束後

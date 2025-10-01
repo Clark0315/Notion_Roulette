@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roulette Probability Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .item-result {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 5px;
+        }
+        .item-name {
+            width: 100px;
+            font-weight: bold;
+        }
+        .item-bar {
+            flex: 1;
+            height: 30px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 5px;
+            position: relative;
+        }
+        .item-count {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: white;
+            font-weight: bold;
+        }
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 5px;
+        }
+        .progress {
+            margin: 10px 0;
+            font-weight: bold;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 轉盤機率測試 (100 次)</h1>
+        <p>此測試模擬 100 次旋轉，檢查各項目出現的機率分布是否均勻。</p>
+        <button id="testBtn" onclick="runTest()">開始測試</button>
+        <div class="progress" id="progress"></div>
+        <div class="results" id="results"></div>
+        <div class="stats" id="stats"></div>
+    </div>
+
+    <script>
+        // 模擬轉盤邏輯
+        function simulateSpin(items) {
+            // 模擬隨機旋轉
+            const spins = 3 + Math.random() * 3;
+            const randomAngle = Math.random() * 360;
+            const totalRotation = (spins * 360) + randomAngle;
+
+            // 計算結果 (與 index.html 相同的邏輯)
+            const normalizedRotation = totalRotation % 360;
+            const pointerAngle = (360 - normalizedRotation) % 360;
+            const anglePerSegment = 360 / items.length;
+            const winningIndex = Math.floor(pointerAngle / anglePerSegment) % items.length;
+
+            return winningIndex;
+        }
+
+        async function runTest() {
+            const btn = document.getElementById('testBtn');
+            const progress = document.getElementById('progress');
+            const results = document.getElementById('results');
+            const stats = document.getElementById('stats');
+
+            btn.disabled = true;
+            results.innerHTML = '';
+            stats.innerHTML = '';
+
+            // 模擬 6 個項目 (與實際轉盤相同)
+            const items = [
+                { name: 'A書' },
+                { name: 'B書' },
+                { name: 'C書' },
+                { name: 'D書' },
+                { name: 'E書' },
+                { name: 'F書' }
+            ];
+
+            const counts = new Array(items.length).fill(0);
+            const totalTests = 100;
+
+            // 執行 100 次測試
+            for (let i = 0; i < totalTests; i++) {
+                const winningIndex = simulateSpin(items);
+                counts[winningIndex]++;
+
+                // 更新進度
+                progress.textContent = `測試進度: ${i + 1} / ${totalTests}`;
+
+                // 每 10 次暫停一下，讓 UI 更新
+                if (i % 10 === 0) {
+                    await new Promise(resolve => setTimeout(resolve, 10));
+                }
+            }
+
+            progress.textContent = '測試完成！';
+
+            // 計算統計資料
+            const expected = totalTests / items.length;
+            const maxCount = Math.max(...counts);
+            let totalDeviation = 0;
+
+            // 顯示結果
+            results.innerHTML = '<h3>各項目出現次數：</h3>';
+            items.forEach((item, index) => {
+                const count = counts[index];
+                const percentage = ((count / totalTests) * 100).toFixed(1);
+                const deviation = Math.abs(count - expected);
+                totalDeviation += deviation;
+
+                const barWidth = (count / maxCount) * 100;
+
+                results.innerHTML += `
+                    <div class="item-result">
+                        <div class="item-name">${item.name}</div>
+                        <div class="item-bar" style="width: ${barWidth}%">
+                            <div class="item-count">${count} 次 (${percentage}%)</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            // 顯示統計資訊
+            const avgDeviation = (totalDeviation / items.length).toFixed(2);
+            const expectedPercentage = (100 / items.length).toFixed(1);
+
+            stats.innerHTML = `
+                <h3>統計分析：</h3>
+                <p><strong>測試次數：</strong>${totalTests} 次</p>
+                <p><strong>項目數量：</strong>${items.length} 個</p>
+                <p><strong>理論機率：</strong>每個項目 ${expectedPercentage}% (${expected.toFixed(1)} 次)</p>
+                <p><strong>平均偏差：</strong>${avgDeviation} 次</p>
+                <p><strong>最大次數：</strong>${Math.max(...counts)} 次</p>
+                <p><strong>最小次數：</strong>${Math.min(...counts)} 次</p>
+                <p><strong>結論：</strong>${avgDeviation < 5 ? '✅ 機率分布良好，接近均勻' : '⚠️ 機率分布有偏差，可能需要調整'}</p>
+            `;
+
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>
