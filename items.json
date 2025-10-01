@@ -1,15 +1,30 @@
 {
+  "title": "🎯 Notion Roulette",
   "displayCount": 6,
+  "colors": [
+    "#FF6384",
+    "#36A2EB",
+    "#FFCE56",
+    "#4BC0C0",
+    "#9966FF",
+    "#FF9F40",
+    "#E74C3C",
+    "#3498DB",
+    "#2ECC71",
+    "#F39C12",
+    "#9B59B6",
+    "#1ABC9C"
+  ],
   "items": [
-    { "name": "A書", "enabled": true, "color": "#FF6384" },
-    { "name": "B書", "enabled": true, "color": "#36A2EB" },
-    { "name": "C書", "enabled": true, "color": "#FFCE56" },
-    { "name": "D書", "enabled": true, "color": "#4BC0C0" },
-    { "name": "E書", "enabled": true, "color": "#9966FF" },
-    { "name": "F書", "enabled": true, "color": "#FF9F40" },
-    { "name": "G書", "enabled": true, "color": "#FF6384" },
-    { "name": "H書", "enabled": true, "color": "#4BC0C0" },
-    { "name": "I書", "enabled": true, "color": "#FFCE56" },
-    { "name": "J書", "enabled": true, "color": "#36A2EB" }
+    { "name": "A書", "enabled": true, "url": "https://example.com/book-a" },
+    { "name": "B書", "enabled": true, "url": "https://example.com/book-b" },
+    { "name": "C書", "enabled": true, "url": "https://example.com/book-c" },
+    { "name": "D書", "enabled": true, "url": "https://example.com/book-d" },
+    { "name": "E書", "enabled": true, "url": "https://example.com/book-e" },
+    { "name": "F書", "enabled": true, "url": "https://example.com/book-f" },
+    { "name": "G書", "enabled": true, "url": "https://example.com/book-g" },
+    { "name": "H書", "enabled": true, "url": "https://example.com/book-h" },
+    { "name": "I書", "enabled": true, "url": "https://example.com/book-i" },
+    { "name": "J書", "enabled": true, "url": "https://example.com/book-j" }
   ]
 }

@@ -114,6 +114,20 @@
             animation: fadeIn 0.5s ease-in;
         }
 
+        .result-link {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.9em;
+            color: #667eea;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .result-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.8); }
             to { opacity: 1; transform: scale(1); }
@@ -143,7 +157,7 @@
 </head>
 <body>
     <div class="container">
-        <h1>🎯 Notion Roulette</h1>
+        <h1 id="title">🎯 Notion Roulette</h1>
         <div class="wheel-container">
             <div class="pointer"></div>
             <svg id="wheel" viewBox="0 0 400 400">
@@ -194,10 +208,19 @@
             }
         }
 
-        // 隨機選擇指定數量的項目
-        function getRandomItems(allItems, count) {
+        // 隨機選擇指定數量的項目並分配顏色
+        function getRandomItems(allItems, count, colors) {
             const shuffled = [...allItems].sort(() => Math.random() - 0.5);
-            return shuffled.slice(0, Math.min(count, allItems.length));
+            const selected = shuffled.slice(0, Math.min(count, allItems.length));
+
+            // 從 colors 列表隨機選擇不重複的顏色
+            const shuffledColors = [...colors].sort(() => Math.random() - 0.5);
+
+            // 為每個項目分配顏色
+            return selected.map((item, index) => ({
+                ...item,
+                color: item.color || shuffledColors[index % shuffledColors.length]
+            }));
         }
 
         // 從 JSON 載入資料
@@ -225,37 +248,45 @@
                 }
 
                 // 支援新舊格式
-                let allItems, displayCount;
+                let allItems, displayCount, colors, title;
                 if (Array.isArray(data)) {
                     // 舊格式：直接是陣列
                     allItems = data.filter(item => item.enabled);
                     displayCount = allItems.length;
+                    colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+                    title = '🎯 Notion Roulette';
                 } else {
-                    // 新格式：包含 displayCount 和 items
+                    // 新格式：包含 displayCount、colors、title 和 items
                     allItems = data.items.filter(item => item.enabled);
                     displayCount = data.displayCount || allItems.length;
+                    colors = data.colors || ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+                    title = data.title || '🎯 Notion Roulette';
                 }
 
                 if (allItems.length === 0) {
                     throw new Error('沒有啟用的項目');
                 }
 
-                // 隨機選擇指定數量的項目
-                items = getRandomItems(allItems, displayCount);
+                // 更新標題
+                document.getElementById('title').textContent = title;
+
+                // 隨機選擇指定數量的項目並分配顏色
+                items = getRandomItems(allItems, displayCount, colors);
 
                 drawWheel();
             } catch (error) {
                 console.error('載入資料失敗:', error);
                 // 使用預設資料
-                items = [
-                    { name: "A書", enabled: true, color: "#FF6384" },
-                    { name: "B書", enabled: true, color: "#36A2EB" },
-                    { name: "C書", enabled: true, color: "#FFCE56" },
-                    { name: "D書", enabled: true, color: "#4BC0C0" },
-                    { name: "E書", enabled: true, color: "#9966FF" },
-                    { name: "F書", enabled: true, color: "#FF9F40" }
+                const defaultColors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+                const defaultItems = [
+                    { name: "A書", enabled: true },
+                    { name: "B書", enabled: true },
+                    { name: "C書", enabled: true },
+                    { name: "D書", enabled: true },
+                    { name: "E書", enabled: true },
+                    { name: "F書", enabled: true }
                 ];
-                items = getRandomItems(items, 6);
+                items = getRandomItems(defaultItems, 6, defaultColors);
                 drawWheel();
             }
         }
@@ -329,7 +360,7 @@
             const result = document.getElementById('result');
 
             btn.disabled = true;
-            result.textContent = '';
+            result.innerHTML = '';
             result.classList.remove('show');
 
             // 播放旋轉音效
@@ -379,7 +410,14 @@
                     const winningIndex = Math.floor(pointerAngle / anglePerSegment) % items.length;
 
                     // 顯示結果
-                    result.textContent = `🎉 ${items[winningIndex].name} 🎉`;
+                    const winningItem = items[winningIndex];
+                    result.innerHTML = `🎉 ${winningItem.name} 🎉`;
+
+                    // 如果有 URL，顯示連結
+                    if (winningItem.url) {
+                        result.innerHTML += `<a href="${winningItem.url}" class="result-link" target="_blank" rel="noopener noreferrer">🔗 ${winningItem.url}</a>`;
+                    }
+
                     result.classList.add('show');
 
                     currentRotation = totalRotation % 360;
