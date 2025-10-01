@@ -375,11 +375,15 @@
                 }
             }
 
-            // 隨機旋轉圈數 (5-8 圈) + 隨機角度，確保總是順時針旋轉
-            const spins = 5 + Math.random() * 3;
+            // 確保至少順時針旋轉 3 圈，最多 6 圈
+            const minSpins = 3;
+            const maxSpins = 6;
+            const spins = minSpins + Math.random() * (maxSpins - minSpins);
             const randomAngle = Math.random() * 360;
-            const additionalRotation = (spins * 360) + randomAngle;  // 總是正值
-            const totalRotation = currentRotation + additionalRotation;  // 累加正值，確保順時針
+
+            // 計算新的絕對旋轉角度（總是增加，確保順時針）
+            const additionalRotation = (spins * 360) + randomAngle;
+            const totalRotation = currentRotation + additionalRotation;
 
             wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
             wheel.style.transform = `rotate(${totalRotation}deg)`;
@@ -420,7 +424,8 @@
 
                     result.classList.add('show');
 
-                    currentRotation = totalRotation % 360;
+                    // 保持累加的絕對角度，不要取模，這樣才能確保每次都是順時針增加
+                    currentRotation = totalRotation;
                     isSpinning = false;
                     btn.disabled = false;
                 }, 900); // shake animation duration
