@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>Notion Roulette</title>
     <style>
         * {
@@ -227,12 +230,14 @@
         async function loadItems() {
             try {
                 // 優先從 GitHub Raw URL 載入 (使用 master 分支)
-                const githubUrl = 'https://raw.githubusercontent.com/Clark0315/Notion_Roulette/master/items.json';
+                // 加入時間戳記避免 cache
+                const timestamp = new Date().getTime();
+                const githubUrl = `https://raw.githubusercontent.com/Clark0315/Notion_Roulette/master/items.json?t=${timestamp}`;
                 let response;
                 let data;
 
                 try {
-                    response = await fetch(githubUrl);
+                    response = await fetch(githubUrl, { cache: 'no-store' });
                     if (!response.ok) {
                         throw new Error('GitHub fetch failed');
                     }
@@ -240,7 +245,7 @@
                 } catch (e) {
                     console.log('從 GitHub 載入失敗，嘗試從本地載入...');
                     // 如果 GitHub 載入失敗，從本地載入
-                    response = await fetch('./items.json');
+                    response = await fetch(`./items.json?t=${timestamp}`, { cache: 'no-store' });
                     if (!response.ok) {
                         throw new Error('Local fetch failed');
                     }
